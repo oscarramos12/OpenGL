@@ -37,72 +37,56 @@ shader1 = """
 
 layout (location = 0) out vec4 fragColor;
 
+uniform int var_type;
+in vec3 mycolor;
 in float intensity;
+uniform int clock;
+
 void main()
 {
   vec4 color;
-  if(intensity<0.1){
-    color= vec4(0,0,0,1);
-  }
-  else if(intensity>0.1 && intensity<0.2){
-      color= vec4(1,1,1,1);
-  }
-  else if(intensity>0.6 && intensity<0.8){
-      color= vec4(1,0,0,1);
-  }
-  else if(intensity>0.8 && intensity<1.6){
-      color= vec4(0,0,0,1);
-  }
-    else if(intensity>1.6 && intensity<2.4){
-      color= vec4(1,0,0,1);
-  }
-    else if(intensity>2.4 && intensity<3.2){
-      color= vec4(1,1,1,1);
-  }
-    else if(intensity>3.2 && intensity<4){
-      color= vec4(0,0,0,1);
-  }
-    
-    else if(intensity>4.8 && intensity<5.6){
-      color= vec4(1,0,0,1);
-  }
-    
-    else if(intensity>5.6 && intensity<6.4){
-      color= vec4(1,1,1,1);
-  }
-    
-    else if(intensity>6.4 && intensity<7.2){
-      color= vec4(0,0,0,1);
-  }
-      else if(intensity>7.2 && intensity<8){
-      color= vec4(1,0,0,1);
-  }
-      else if(intensity>8 && intensity<8.8){
-      color= vec4(1,0,0,1);
-  }
-      else if(intensity>8.8 && intensity<9.6){
-      color= vec4(1,1,1,1);
-  }
-      else{
-        color= vec4(1,0,0,1);
+  if(var_type == 2){
+    if(intensity<0.1){
+        color= vec4(0,0,0,1);
       }
+      else if(intensity>0.1 && intensity<0.2){
+          color= vec4(1,1,1,1);
+      }
+      else if(intensity>0.6 && intensity<0.8){
+          color= vec4(1,0,0,1);
+      }
+      else if(intensity>0.8 && intensity<1.6){
+          color= vec4(0,0,0,1);
+      }
+        else if(intensity>1.6 && intensity<2.4){
+          color= vec4(1,0,0,1);
+      }
+        else if(intensity>2.4 && intensity<3.2){
+          color= vec4(1,1,1,1);
+      }
+          else{
+            color= vec4(1,0,0,1);
+          }
 
-    fragColor = color;
+        fragColor = color;
+  }
+  else if(var_type == 1){
+    if(mycolor.z < 0.33 && intensity < 0.5){
+    fragColor = vec4(clock * 0.01f, 0,0, 1.0f);
+  }
+    else if(mycolor.z > 0.33 && mycolor.z < 0.66 && intensity < 0.5){
+    fragColor = vec4(0, clock * 0.01f,0, 1.0f);
+  }
+    else if(mycolor.z > 0.66 && mycolor.z < 1 && intensity < 0.5){
+    fragColor = vec4(0, 0,clock * 0.01f, 1.0f);
+  }
+  else{
+    fragColor = vec4(1 - clock * 0.01f,1 -  clock * 0.01f,1 - clock * 0.01f, 1.0f);
+  }
+  }
 
-}
-
-"""
-
-shader2 = """
-#version 460
-layout(location = 0) out vec4 fragColor;
-
-in vec3 mycolor;
-in float intensity;
-
-void main()
-{
-  if (mycolor.y + mycolor.x <0.1 ) {
+  else if(var_type == 3){
+     if (mycolor.y + mycolor.x <0.1 ) {
     fragColor = vec4(1  ,0.9,0.8 , 1.0f);
 
   } else if(mycolor.y - mycolor.x > 0.1 && mycolor.y - mycolor.x < 0.2){
@@ -132,40 +116,16 @@ void main()
   else if(mycolor.y - mycolor.x > 0.9 && mycolor.y- mycolor.x < 1){
     fragColor = vec4(1  ,0.9,0.8 , 1.0f);
   }
+  }
+  
 
 }
 
 """
-shader3="""
-#version 460
-layout(location = 0) out vec4 fragColor;
 
-uniform int clock;
-in vec3 mycolor;
-in float intensity;
-
-
-
-void main()
-{
-  if(mycolor.z < 0.33 && intensity < 0.5){
-    fragColor = vec4(clock * 0.01f, 0,0, 1.0f);
-  }
-    else if(mycolor.z > 0.33 && mycolor.z < 0.66 && intensity < 0.5){
-    fragColor = vec4(0, clock * 0.01f,0, 1.0f);
-  }
-    else if(mycolor.z > 0.66 && mycolor.z < 1 && intensity < 0.5){
-    fragColor = vec4(0, 0,clock * 0.01f, 1.0f);
-  }
-  else{
-    fragColor = vec4(1 - clock * 0.01f,1 -  clock * 0.01f,1 - clock * 0.01f, 1.0f);
-  }
-}
-
-"""
 
 cvs = compileShader(vertex_shader, GL_VERTEX_SHADER)
-cfs = compileShader(shader3, GL_FRAGMENT_SHADER)
+cfs = compileShader(shader1, GL_FRAGMENT_SHADER)
 
 shader = compileProgram(cvs, cfs)
 
@@ -213,7 +173,7 @@ glUseProgram(shader)
 
 from math import sin
 
-def render(up,down,side):
+def render(up,down,side,var_type):
   i = glm.mat4(1)
 
   lightpoint = glm.vec3(up+20,side,down+10)
@@ -236,6 +196,10 @@ def render(up,down,side):
   )
   glUniform3f(glGetUniformLocation(shader, "lightpoint"),
                         lightpoint.x, lightpoint.y, lightpoint.z)
+  glUniform1i(
+    glGetUniformLocation(shader, 'var_type'),
+    var_type
+  )
 
 glViewport(0, 0, 1200, 720)
 
@@ -243,8 +207,9 @@ a = 0
 up = 0
 down = 20
 side = 0
+var_type = 1
 running = True
-render(up,down,side)
+render(up,down,side,var_type)
 while running:
   glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
 
@@ -266,24 +231,33 @@ while running:
     if event.type == pygame.KEYDOWN:
       if event.key == pygame.K_a:
             side -= 15
-            render(up,down,side)
+            render(up,down,side,var_type)
       elif event.key == pygame.K_d:
           side += 15
-          render(up,down,side)
+          render(up,down,side,var_type)
       elif event.key == pygame.K_w:
             up += 3
-            render(up,down,side)
+            render(up,down,side,var_type)
       elif event.key == pygame.K_s:
             up -= 3
-            render(up,down,side)
+            render(up,down,side,var_type)
       elif event.key == pygame.K_q:
             down += 5
-            render(up,down,side)
+            render(up,down,side,var_type)
       elif event.key == pygame.K_e:
             if(down > 5):
               down -= 5
-              render(up,down,side)
+              render(up,down,side,var_type)
             else:
-                render(up,5,side)
+                render(up,5,side,var_type)
+      elif event.key == pygame.K_1:
+          var_type = 1
+          render(up,down,side,var_type)
+      elif event.key == pygame.K_2:
+          var_type = 2
+          render(up,down,side,var_type)
+      elif event.key == pygame.K_3:
+          var_type = 3
+          render(up,down,side,var_type)
       
             
